@@ -1,0 +1,6 @@
+{
+  "name": "Alon & Aninag Boutique Beach Resort",
+  "description": "Where Waves Rest and Souls Glow. Official website for Alon & Aninag Boutique Beach Resort at Poblacion Beach, Sipalay City, Negros Occidental. Features dynamic reservations, virtual tour, interactive Sipalay diving map, weather widget, currency converter, translator, loyalty rewards, and Negrense dining.",
+  "requestFramePermissions": ["notifications"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
