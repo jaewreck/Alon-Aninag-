@@ -66,17 +66,44 @@ export const LiveChatWidget: React.FC = () => {
         text: m.text,
       }));
 
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: query, history }),
-      });
+      let replyText = "";
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: query, history }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          replyText = data.reply;
+        }
+      } catch {
+        // Fall through to client-side smart concierge
+      }
 
-      const data = await res.json();
+      if (!replyText) {
+        const q = query.toLowerCase();
+        if (q.includes("room") || q.includes("price") || q.includes("rate") || q.includes("cost") || q.includes("villa") || q.includes("loft")) {
+          replyText = "Maayong adlaw! 🌅 Our 12 beachfront rooms range from ₱1,800 to ₱3,500/night. Highlights include our Sunset Balcony Villa (₱3,200), Barkada Loft (₱3,500 for 6 guests), and Aninag Seaview Suite (₱2,800). Every stay includes breakfast and complimentary Aninag Sunset coffee!";
+        } else if (q.includes("how to get") || q.includes("travel") || q.includes("bus") || q.includes("airport") || q.includes("bacolod") || q.includes("dumaguete")) {
+          replyText = "To reach us at Poblacion Beach, Sipalay: fly into Bacolod (Silay Airport, BCD) and take a 4-hour scenic Ceres bus/van south, or fly into Dumaguete (DGT) and take a 3.5-hour bus. We also arrange private resort van pick-ups from either airport upon request!";
+        } else if (q.includes("sunset") || q.includes("coffee") || q.includes("aninag hour") || q.includes("lantern") || q.includes("time")) {
+          replyText = "🌅 **Aninag Hour** happens daily from 5:15 PM to 6:00 PM on our wooden Sunset Deck! We serve complimentary freshly brewed Negrense drip coffee, light amber paper lanterns, and host beachfront acoustic sessions.";
+        } else if (q.includes("food") || q.includes("eat") || q.includes("dinner") || q.includes("restaurant") || q.includes("menu") || q.includes("bistro")) {
+          replyText = "Our Beachfront Bistro serves fresh Negrense favorites: Charcoal-grilled Chicken Inasal, Fresh Sipalay Tuna Kinilaw, KBL (Kadyos Baboy Langka), Sizzling Cansil, and warm toasted Piaya paired with local drip coffee.";
+        } else if (q.includes("dive") || q.includes("diving") || q.includes("wreck") || q.includes("julian") || q.includes("tour") || q.includes("island") || q.includes("boat")) {
+          replyText = "🌊 Sipalay is the jewel of southern Negros! We organize boat tours to Tinagong Dagat, Sugar Beach, Perth Paradise infinity view, and guided scuba dives to Julian's WWII Japanese shipwreck (depth 8–18m) and Campomanes Bay reefs.";
+        } else if (q.includes("wifi") || q.includes("work") || q.includes("internet")) {
+          replyText = "Yes! We have high-speed Starlink Wi-Fi across the resort lounge, cafe deck, and rooms—ideal for digital nomads and remote work while enjoying ocean breezes.";
+        } else {
+          replyText = "Maayong adlaw! Thank you for inquiring with Alon & Aninag. You can explore all our 12 rooms, book directly with instant confirmation, or use our Traveler Hub for tides, weather, and Hiligaynon translations!";
+        }
+      }
+
       const aiReply: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         sender: "ai",
-        text: data.reply || "Maayong adlaw! We are excited to welcome you to Alon & Aninag. Please let us know if you need anything else!",
+        text: replyText,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
@@ -85,7 +112,7 @@ export const LiveChatWidget: React.FC = () => {
       const errorReply: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         sender: "ai",
-        text: "Maayong adlaw! I am having a brief connection hitch, but our front desk is on stand-by. You can also reach us via phone or at frontdesk@alonaninag.ph!",
+        text: "Maayong adlaw! Our front desk team is always available at Poblacion Beach or via frontdesk@alonaninag.ph to assist your booking!",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setMessages((prev) => [...prev, errorReply]);

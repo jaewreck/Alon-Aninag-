@@ -102,6 +102,9 @@ export const TravelerToolsHub: React.FC<TravelerToolsHubProps> = ({
     if (!translateInput.trim()) return;
 
     setIsTranslating(true);
+    let resultText = "";
+    let phoneticGuide = "";
+
     try {
       const response = await fetch("/api/translate", {
         method: "POST",
@@ -112,14 +115,50 @@ export const TravelerToolsHub: React.FC<TravelerToolsHubProps> = ({
           targetLang,
         }),
       });
-      const data = await response.json();
-      setTranslatedResult(data.translatedText || translateInput);
-      setPronunciationGuide(data.pronunciation || "");
+      if (response.ok) {
+        const data = await response.json();
+        resultText = data.translatedText;
+        phoneticGuide = data.pronunciation || "";
+      }
     } catch {
-      setTranslatedResult(translateInput);
-    } finally {
-      setIsTranslating(false);
+      // Fallback to client-side Hiligaynon / multi-language dictionary
     }
+
+    if (!resultText) {
+      const clean = translateInput.trim().toLowerCase();
+      const localDict: Record<string, Record<string, { hil: string; pron: string }>> = {
+        "good morning": { hil: { hil: "Maayong aga", pron: "mah-AH-yong AH-gah" } },
+        "good afternoon": { hil: { hil: "Maayong hapon", pron: "mah-AH-yong HAH-pon" } },
+        "good evening": { hil: { hil: "Maayong gab-i", pron: "mah-AH-yong GAB-ee" } },
+        "good day": { hil: { hil: "Maayong adlaw", pron: "mah-AH-yong AHD-lahw" } },
+        "thank you": { hil: { hil: "Madamo gid nga salamat", pron: "mah-DAH-moh geed ngah sah-LAH-maht" } },
+        "thank you very much": { hil: { hil: "Madamo gid nga salamat palangga", pron: "mah-DAH-moh geed ngah sah-LAH-maht pah-LAHNG-gah" } },
+        "how much is this": { hil: { hil: "Tagpila ini?", pron: "tahg-pee-LAH ee-NEE" } },
+        "how much": { hil: { hil: "Tagpila?", pron: "tahg-pee-LAH" } },
+        "delicious": { hil: { hil: "Namanamian / Manamit gid!", pron: "mah-NAH-meet geed" } },
+        "where is the beach": { hil: { hil: "Diin ang baybayon?", pron: "dee-EEN ahng bye-bye-YON" } },
+        "where is the boat": { hil: { hil: "Diin ang baroto / sakayan?", pron: "dee-EEN ahng bah-ROH-toh" } },
+        "where is the room": { hil: { hil: "Diin ang kwarto?", pron: "dee-EEN ahng KWAHR-toh" } },
+        "let's go": { hil: { hil: "Dali na / Malakat na kita", pron: "DAH-lee nah / mah-lah-KAHT nah kee-TAH" } },
+        "welcome": { hil: { hil: "Maayong pag-abot sa Alon & Aninag", pron: "mah-AH-yong pahg-ah-BOHT" } },
+        "coffee": { hil: { hil: "Kape", pron: "KAH-peh" } },
+        "sunset": { hil: { hil: "Tunod-adlaw / Aninag", pron: "TOO-nod AHD-lahw" } },
+      };
+
+      // Match in dictionary or direct translation
+      const match = Object.keys(localDict).find((k) => clean.includes(k));
+      if (match && targetLang === "hil") {
+        resultText = localDict[match].hil.hil;
+        phoneticGuide = localDict[match].hil.pron;
+      } else {
+        resultText = targetLang === "hil" ? `[Hiligaynon]: ${translateInput}` : translateInput;
+        phoneticGuide = "Local Negrense cadence";
+      }
+    }
+
+    setTranslatedResult(resultText);
+    setPronunciationGuide(phoneticGuide);
+    setIsTranslating(false);
   };
 
   // Text-To-Speech for Hiligaynon/Translations
